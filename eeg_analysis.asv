@@ -1,0 +1,330 @@
+clc;
+clear all;
+close all;
+filename='G:\MATLAB\DTE LAB\EEG\tp.xls';
+xlRange1='A1:A2562';
+xlRange2='B1:B2562';
+eeg1=xlsread(filename,xlRange1);
+eeg2=xlsread(filename,xlRange2);
+eeg1=eeg1/abs(max(eeg1));eeg1=detrend(eeg1,0);
+eeg2=eeg2/abs(max(eeg2));eeg2=detrend(eeg2,0);
+T=41;
+f1=length(eeg1)/T;
+f2=length(eeg2)/T;
+t1=0:1/f1:(length(eeg1)-1)/f1;
+t2=0:1/f2:(length(eeg2)-1)/f2;
+ 
+figure(1);
+subplot(2,1,1);plot(t1,eeg1);title('EEG FROM CHANNEL 1');
+xlabel('Time(s)');ylabel('Amplitude(microvolt)');
+subplot(2,1,2);plot(t2,eeg2);title('EEG FROM CHANNEL 2');
+xlabel('Time(s)');ylabel('Amplitude(microvolt)');
+EEG1=periodogram(eeg1);EEG1=EEG1/abs(max(EEG1));
+EEG2=periodogram(eeg2);EEG2=EEG2/abs(max(EEG2));
+ 
+ 
+figure(2);
+f=200;w=0:(f/2)/length(EEG1):(f/2)-((f/2)/length(EEG1));
+subplot(2,1,1);plot(w,EEG1);title('Power spectral density of  EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(2,1,2);plot(w,EEG2);title('Power spectral density of  EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+ 
+%BANDPASS FILTERING
+f=300;rp=4;rs=30;
+fp1=0.5;fp2=100;fs1=0.25;fs2=120;
+wp1=(2.*fp1)/f ;wp2=(2.*fp2)/f ;
+ws1=(2.*fs1)/f ;ws2=(2.*fs2)/f ;
+[N,wn]=buttord([wp1 wp2],[ws1 ws2],rp,rs);
+[b,a]=butter(N,wn,'bandpass');
+bp1=filtfilt(b,a,eeg1);bp1=bp1/abs(max(bp1));
+bp2=filtfilt(b,a,eeg2);bp2=bp2/abs(max(bp2));
+ 
+figure(3);
+subplot(2,1,1);plot(t1,bp1);title('BandPassFiltering of EEG FROM CHANNEL 1');
+xlabel('Time(s)');ylabel('Amplitude(microvolt)');
+subplot(2,1,2);plot(t2,bp2);title('BandPassFiltering of EEG FROM CHANNEL 2');
+xlabel('Time(s)');ylabel('Amplitude(microvolt)');
+ 
+%NOTCH FILTER
+w=50/(200/2);
+bw=w;
+[num,den]=iirnotch(w,bw); % notch filter implementation
+eeg_notch1=filter(num,den,bp1);
+ 
+figure(4);
+subplot(2,1,1);plot(t1,eeg_notch1);title('NOTCH FILTERING OF EEG1');
+xlabel('time(in s)');ylabel('Amplitude(microvolt)');
+eeg_notch2=filter(num,den,bp2);
+subplot(2,1,2);plot(t2,eeg_notch2);title('NOTCH FILTERING OF EEG2');
+xlabel('time(in s)');ylabel('Amplitude(microvolt)');
+ 
+ 
+%Band separation
+f=200;rp=4;rs=30;
+ 
+%delta
+fp01=0.5;fp02=4;fs01=0.05;fs02=10;
+wp01=(2.*fp01)/f ;
+wp02=(2.*fp02)/f ;
+ws01=(2.*fs01)/f ;
+ws02=(2.*fs02)/f ;
+[N1,wn1]=buttord([wp01 wp02],[ws01 ws02],rp,rs);
+[b1,a1]=butter(N1,wn1,'bandpass');
+delta1=filtfilt(b1,a1,eeg1);delta1=delta1/abs(max(delta1));
+delta2=filtfilt(b1,a1,eeg2);delta2=delta2/abs(max(delta2));
+DT1=periodogram(delta1);DT1=DT1/abs(max(DT1));
+DT2=periodogram(delta2);DT2=DT2/abs(max(DT2));
+ 
+%theta
+fp11=4;fp12=8;fs11=2;fs12=15;
+wp11=(2.*fp11)/f ;
+wp12=(2.*fp12)/f ;
+ws11=(2.*fs11)/f ;
+ws12=(2.*fs12)/f ;
+[N2,wn2]=buttord([wp11 wp12],[ws11 ws12],rp,rs);
+[b2,a2]=butter(N2,wn2,'bandpass');
+theta1=filtfilt(b2,a2,eeg1);theta1=theta1/abs(max(theta1));
+theta2=filtfilt(b2,a2,eeg2);theta2=theta2/abs(max(theta2));
+TT1=periodogram(theta1);TT1=TT1/abs(max(TT1));
+TT2=periodogram(theta2);TT2=TT2/abs(max(TT2));
+ 
+%alpha
+fp21=8;fp22=13;fs21=5;fs22=20;
+wp21=(2.*fp21)/f ;
+wp22=(2.*fp22)/f ;
+ws21=(2.*fs21)/f ;
+ws22=(2.*fs22)/f ;
+[N3,wn3]=buttord([wp21 wp22],[ws21 ws22],rp,rs);
+[b3,a3]=butter(N3,wn3,'bandpass');
+alpha1=filtfilt(b3,a3,eeg1);alpha1=alpha1/abs(max(alpha1));
+alpha2=filtfilt(b3,a3,eeg2);alpha2=alpha2/abs(max(alpha2));
+AL1=periodogram(alpha1);AL1=AL1/abs(max(AL1));
+AL2=periodogram(alpha2);AL2=AL2/abs(max(AL2));
+ 
+%beta
+fp31=14;fp32=30;fs31=10;fs32=50;
+wp31=(2.*fp31)/f;
+wp32=(2.*fp32)/f;
+ws31=(2.*fs31)/f;
+ws32=(2.*fs32)/f;
+[N4,wn4]=buttord([wp31 wp32],[ws31 ws32],rp,rs);
+[b4,a4]=butter(N4,wn4,'bandpass');
+beta1=filtfilt(b4,a4,eeg1);beta1=beta1/abs(max(beta1));
+beta2=filtfilt(b4,a4,eeg1);beta2=beta2/abs(max(beta2));
+BT1=periodogram(beta1);BT1=BT1/abs(max(BT1));
+BT2=periodogram(beta2);BT2=BT2/abs(max(BT2));
+ 
+%gamma
+fp41=30;fs41=20;
+wp41=(2.*fp41)/f ;
+ws41=(2.*fs41)/f ;
+[N5,wn5]=buttord(wp41,ws41,rp,rs);
+[b5,a5]=butter(N5,wn5,'high');
+gamma1=filtfilt(b5,a5,eeg1);gamma1=gamma1/abs(max(gamma1));
+gamma2=filtfilt(b5,a5,eeg2);gamma2=gamma2/abs(max(gamma2));
+GM1=periodogram(gamma1);GM1=GM1/abs(max(GM1));
+GM2=periodogram(gamma2);GM2=GM2/abs(max(GM2));
+ 
+ 
+%freq bands
+figure(5);
+sgtitle('CHANNEL 1 EEG BAND SEPARATION USING BAND PASS FILTER');
+subplot(5,1,1);plot(t1,delta1);title('Delta band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,2);plot(t1,theta1);title('Theta band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,3);plot(t1,alpha1);title('Alpha band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,4);plot(t1,beta1);title('Beta band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,5);plot(t1,gamma1);title('Gamma band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+ 
+figure(6);
+sgtitle('CHANNEL 2 EEG BAND SEPARATION USING BAND PASS FILTER');
+subplot(5,1,1);plot(t2,delta2);title('Delta band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,2);plot(t2,theta2);title('Theta band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,3);plot(t2,alpha2);title('Alpha band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,4);plot(t2,beta2);title('Beta band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,5);plot(t2,gamma2);title('Gamma band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+ 
+%power spectral density of the bands
+f=200;w1=0:(f/2)/length(EEG1):(f/2)-((f/2)/length(EEG1));
+figure(7);
+
+subplot(5,1,1);plot(w1,DT1);title('Power spectral density of Delta band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,2);plot(w1,TT1);title('Power spectral density of Theta band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,3);plot(w1,AL1);title('Power spectral density of Alpha band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,4);plot(w1,BT1);title('Power spectral density of Beta band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,5);plot(w1,GM1);title('Power spectral density of Gamma band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+ 
+ 
+f=200;w2=0:(f/2)/length(EEG2):(f/2)-((f/2)/length(EEG2));
+figure(8);
+subplot(5,1,1);plot(w2,DT2);title('Power spectral density of Delta band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,2);plot(w2,TT2);title('Power spectral density of Theta band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,3);plot(w2,AL2);title('Power spectral density of Alpha band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,4);plot(w2,BT2);title('Power spectral density of Beta band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,5);plot(w2,GM2);title('Power spectral density of Gamma band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+ 
+%BAND SEPERATION USING CHEBYSHEV FILTER
+f=200;rp=4;rs=30;
+ 
+%delta
+fp51=0.5;fp52=4;fs51=0.05;fs52=10;
+wp51=(2.*fp51)/f ;
+wp52=(2.*fp52)/f ;
+ws51=(2.*fs51)/f ;
+ws52=(2.*fs52)/f ;
+[N6,wn6]=cheb1ord([wp51 wp52],[ws51 ws52],rp,rs);
+[b6,a6]=cheby1(N6,rp,wn6,'bandpass');
+delta01=filtfilt(b6,a6,eeg1);delta01=delta01/abs(max(delta01));
+delta02=filtfilt(b6,a6,eeg2);delta02=delta02/abs(max(delta02));
+DT01=periodogram(delta01);DT01=DT01/abs(max(DT01));
+DT02=periodogram(delta02);DT02=DT02/abs(max(DT02));
+%theta
+fp61=4;fp62=8;fs61=2;fs62=15;
+wp61=(2.*fp61)/f ;
+wp62=(2.*fp62)/f ;
+ws61=(2.*fs61)/f ;
+ws62=(2.*fs62)/f ;
+[N7,wn7]=cheb1ord([wp61 wp62],[ws61 ws62],rp,rs);
+[b7,a7]=cheby1(N7,rp,wn7,'bandpass');
+theta01=filtfilt(b7,a7,eeg1);theta01=theta01/abs(max(theta01));
+theta02=filtfilt(b7,a7,eeg2);theta02=theta02/abs(max(theta02));
+TT01=periodogram(theta01);TT01=TT01/abs(max(TT01));
+TT02=periodogram(theta02);TT02=TT02/abs(max(TT02));
+%alpha
+fp71=8;fp72=13;fs71=5;fs72=20;
+wp71=(2.*fp71)/f ;
+wp72=(2.*fp72)/f ;
+ws71=(2.*fs71)/f ;
+ws72=(2.*fs72)/f ;
+[N8,wn8]=cheb1ord([wp71 wp72],[ws71 ws72],rp,rs);
+[b8,a8]=cheby1(N8,rp,wn8,'bandpass');
+alpha01=filtfilt(b8,a8,eeg1);alpha01=alpha01/abs(max(alpha01));
+alpha02=filtfilt(b8,a8,eeg2);alpha02=alpha02/abs(max(alpha02));
+AL01=periodogram(alpha01);AL01=AL01/abs(max(AL01));
+AL02=periodogram(alpha02);AL02=AL02/abs(max(AL02));
+%beta
+fp81=14;fp82=30;fs81=10;fs82=50;
+wp81=(2.*fp81)/f;
+wp82=(2.*fp82)/f;
+ws81=(2.*fs81)/f;
+ws82=(2.*fs82)/f;
+[N9,wn9]=cheb1ord([wp81 wp82],[ws81 ws82],rp,rs);
+[b9,a9]=cheby1(N9,rp,wn9,'bandpass');
+beta01=filtfilt(b9,a9,eeg1);beta01=beta01/abs(max(beta01));
+beta02=filtfilt(b9,a9,eeg2);beta02=beta02/abs(max(beta02));
+BT01=periodogram(beta01);BT01=BT01/abs(max(BT01));
+BT02=periodogram(beta02);BT02=BT02/abs(max(BT02));
+%gamma
+fp91=30;fs91=20;
+wp91=(2.*fp91)/f ;
+ws91=(2.*fs91)/f ;
+[N0,wn0]=cheb1ord(wp91,ws91,rp,rs);
+[b0,a0]=cheby1(N0,rp,wn0,'high');
+gamma01=filtfilt(b0,a0,eeg1);gamma01=gamma01/abs(max(gamma01));
+gamma02=filtfilt(b0,a0,eeg2);gamma02=gamma02/abs(max(gamma02));
+GM01=periodogram(gamma01);GM01=GM01/abs(max(GM01));
+GM02=periodogram(gamma02);GM02=GM02/abs(max(GM02));
+ 
+%freq bands
+figure(9);
+sgtitle('CHANNEL 1 EEG BAND SEPARATION USING CHEBYSHEV FILTER');
+subplot(5,1,1);plot(t1,delta01);title('Delta band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,2);plot(t1,theta01);title('Theta band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,3);plot(t1,alpha01);title('Alpha band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,4);plot(t1,beta01);title('Beta band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,5);plot(t1,gamma01);title('Gamma band of EEG1');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+ 
+figure(10);
+sgtitle('CHANNEL 2 EEG BAND SEPARATION USING CHEBYSHEV FILTER');
+subplot(5,1,1);plot(t2,delta02);title('Delta band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,2);plot(t2,theta02);title('Theta band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,3);plot(t2,alpha02);title('Alpha band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,4);plot(t2,beta02);title('Beta band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+subplot(5,1,5);plot(t2,gamma02);title('Gamma band of EEG2');
+xlabel('Time(in s)');ylabel('Voltage(in µV)');
+ 
+%psd of bands separated using chebyshev filter
+f=200;w1=0:(f/2)/length(EEG1):(f/2)-((f/2)/length(EEG1));
+figure(11);
+sgtitle('PSD of bands separated using chebyshev filter - EEG1');
+subplot(5,1,1);plot(w1,DT01);title('Power spectral density of Delta band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,2);plot(w1,TT01);title('Power spectral density of Theta band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,3);plot(w1,AL01);title('Power spectral density of Alpha band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,4);plot(w1,BT01);title('Power spectral density of Beta band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,5);plot(w1,GM01);title('Power spectral density of Gamma band of EEG1');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+ 
+ 
+f=200;w2=0:(f/2)/length(EEG2):(f/2)-((f/2)/length(EEG2));
+figure(12);
+sgtitle('PSD of bands separated using chebyshev filter - EEG C2');
+subplot(5,1,1);plot(w2,DT02);title('Power spectral density of Delta band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,2);plot(w2,TT02);title('Power spectral density of Theta band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,3);plot(w2,AL02);title('Power spectral density of Alpha band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,4);plot(w2,BT02);title('Power spectral density of Beta band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+subplot(5,1,5);plot(w2,GM02);title('Power spectral density of Gamma band of EEG2');
+xlabel('Frequency in Hz');ylabel('PSD(dB/Hz)');
+ 
+ 
+%Corelation
+a=xcorr(eeg1);
+b=xcorr(eeg2);
+c=xcorr(eeg1,eeg2);
+d=xcorr(eeg2,eeg1);
+figure(13);
+subplot(4,1,1);
+plot(a);
+title('Autocorrelation between channe11 O1-A1');
+xlabel('lag');ylabel('Autocorrelation');
+subplot(4,1,2);
+plot(b);
+title('Autocorrelation between channe12 O2-A2');
+xlabel('lag');ylabel('Autocorrelation');
+subplot(4,1,3);
+plot(c);
+title('Crosscorrelation between channe1 1 and 2 O2-A1');
+xlabel('lag');ylabel('Crosscorrelation');
+subplot(4,1,4);
+plot(d);
+title('Crosscorrelation between channe1 2 and 1 O1-A2');
+xlabel('lag');ylabel('Crosscorrelation');
+ 
+
+
