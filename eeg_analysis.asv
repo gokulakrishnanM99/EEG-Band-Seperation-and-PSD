@@ -1,9 +1,9 @@
 clc;
 clear all;
 close all;
-filename='G:\MATLAB\DTE LAB\EEG\tp.xls';
-xlRange1='A1:A2562';
-xlRange2='B1:B2562';
+filename='Location\file.xls';
+xlRange1='A3:A2562';
+xlRange2='B3:B2562';
 eeg1=xlsread(filename,xlRange1);
 eeg2=xlsread(filename,xlRange2);
 eeg1=eeg1/abs(max(eeg1));eeg1=detrend(eeg1,0);
@@ -325,6 +325,3 @@ subplot(4,1,4);
 plot(d);
 title('Crosscorrelation between channe1 2 and 1 O1-A2');
 xlabel('lag');ylabel('Crosscorrelation');
- 
-
-
